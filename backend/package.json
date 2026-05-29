@@ -1,24 +1,17 @@
 {
-  "name": "library_management",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "database lab project",
-  "homepage": "https://github.com/nvquynhanh0910/Dtb_project#readme",
-  "bugs": {
-    "url": "https://github.com/nvquynhanh0910/Dtb_project/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nvquynhanh0910/Dtb_project.git"
-  },
-  "license": "ISC",
-  "author": "Nguyen Vu Quynh Anh",
-  "type": "commonjs",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",

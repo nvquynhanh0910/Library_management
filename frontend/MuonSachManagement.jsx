@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { mockData } from '../data/mockdata';
 
-const G  = '#7DA78C';
-const GL = '#e8f5ec';
+const G   = '#7DA78C';
+const GL  = '#e8f5ec';
 const TODAY = new Date().toISOString().split('T')[0];
 
 const TT_STYLE = {
@@ -11,7 +11,6 @@ const TT_STYLE = {
     'Quá hạn':   { background: '#ffebee', color: '#c62828' },
 };
 
-// Thông báo
 const Alert = ({ msg }) => {
     if (!msg) return null;
     const ok = msg.type === 'success';
@@ -22,7 +21,142 @@ const Alert = ({ msg }) => {
     );
 };
 
-// ─── Tab 1: Lập phiếu mượn ───────────────────────────────
+const LichSuMuonCaNhan = ({ user, phieuList, muonList }) => {
+    const [filter, setFilter] = useState('');
+
+    const tenDocGia = user?.name || '';
+    const maTV      = user?.maThanhVien || '';
+
+    const myPhieu = phieuList.filter(p =>
+        (maTV && p.MaThanhVien === maTV) || p.HoTenDocGia === tenDocGia
+    );
+
+    const filtered = myPhieu.filter(p => !filter || p.TrangThai === filter);
+
+    const dangMuon = myPhieu.filter(p => p.TrangThai === 'Đang mượn').length;
+    const quaHan   = myPhieu.filter(p => p.TrangThai === 'Quá hạn').length;
+    const daTra    = myPhieu.filter(p => p.TrangThai === 'Đã trả').length;
+
+    return (
+        <div>
+            {/* Tiêu đề cá nhân */}
+            <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#222' }}>📋 Lịch sử mượn sách của tôi</h2>
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#999' }}>
+                    Xin chào, <strong>{tenDocGia}</strong> — tổng {myPhieu.length} phiếu mượn
+                </p>
+            </div>
+
+            {/* Thẻ tóm tắt */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                {[
+                    { label: 'Đang mượn',  value: dangMuon, color: '#e65100', bg: '#fff3e0' },
+                    { label: 'Quá hạn',   value: quaHan,   color: '#c62828', bg: '#ffebee' },
+                    { label: 'Đã trả',    value: daTra,    color: '#2e7d32', bg: GL        },
+                ].map(c => (
+                    <div key={c.label} style={{ background: 'white', borderRadius: '8px', padding: '14px 18px', boxShadow: '0 2px 6px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.color}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '8px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            {c.label === 'Đang mượn' ? '🔄' : c.label === 'Quá hạn' ? '⚠️' : '✅'}
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '22px', fontWeight: '700', color: c.color, lineHeight: 1 }}>{c.value}</div>
+                            <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>{c.label}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Cảnh báo quá hạn */}
+            {quaHan > 0 && (
+                <div style={{ background: '#ffebee', border: '1px solid #ffcdd2', borderRadius: '8px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#c62828', fontWeight: '500' }}>
+                    ⚠️ Bạn có <strong>{quaHan}</strong> phiếu mượn quá hạn. Vui lòng liên hệ thủ thư để xử lý!
+                </div>
+            )}
+
+            {/* Bộ lọc */}
+            <div style={{ display: 'flex', gap: '7px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                {['', 'Đang mượn', 'Đã trả', 'Quá hạn'].map(s => (
+                    <button key={s} onClick={() => setFilter(s)} style={{
+                        padding: '6px 14px', borderRadius: '20px', cursor: 'pointer',
+                        fontSize: '13px', fontWeight: '500',
+                        border:      `1px solid ${filter === s ? G : '#ddd'}`,
+                        background:  filter === s ? G : 'white',
+                        color:       filter === s ? 'white' : '#777',
+                    }}>
+                        {s || 'Tất cả'} ({s ? myPhieu.filter(p => p.TrangThai === s).length : myPhieu.length})
+                    </button>
+                ))}
+            </div>
+
+            {/* Bảng lịch sử */}
+            {filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#ccc', background: 'white', borderRadius: '10px' }}>
+                    Chưa có phiếu mượn nào
+                </div>
+            ) : (
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Ngày mượn</th>
+                                <th>Sách mượn</th>
+                                <th>Hạn trả</th>
+                                <th>Ngày trả thực tế</th>
+                                <th>Tiền phạt</th>
+                                <th style={{ textAlign: 'center' }}>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.map(p => {
+                                const sachTrongPhieu = muonList.filter(m => m.MaPhieu === p.MaPhieu);
+                                const tongPhat       = sachTrongPhieu.reduce((s, m) => s + (m.TienPhatPhatSinh || 0), 0);
+                                const ts             = TT_STYLE[p.TrangThai] || { background: '#eee', color: '#555' };
+
+                                return (
+                                    <tr key={p.MaPhieu}>
+                                        <td>
+                                            <code style={{ background: GL, color: G, padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>
+                                                {p.MaPhieu}
+                                            </code>
+                                        </td>
+                                        <td style={{ color: '#777' }}>{p.NgayLapPhieu}</td>
+                                        <td>
+                                            {sachTrongPhieu.map(m => (
+                                                <div key={m.MaCuonSach} style={{ marginBottom: '3px', fontSize: '13px' }}>
+                                                    <span style={{ fontWeight: '500' }}>{m.TenSach}</span>
+                                                    <code style={{ marginLeft: '6px', fontSize: '11px', color: '#aaa' }}>{m.MaCuonSach}</code>
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td style={{ color: p.TrangThai === 'Quá hạn' ? '#c62828' : '#777', fontWeight: p.TrangThai === 'Quá hạn' ? '600' : '400' }}>
+                                            {sachTrongPhieu[0]?.HanTra || '—'}
+                                        </td>
+                                        <td style={{ color: '#777' }}>
+                                            {sachTrongPhieu[0]?.NgayTraThucTe || (
+                                                <span style={{ color: '#bbb', fontStyle: 'italic' }}>Chưa trả</span>
+                                            )}
+                                        </td>
+                                        <td style={{ fontWeight: '600', color: tongPhat > 0 ? '#c62828' : '#aaa' }}>
+                                            {tongPhat > 0 ? tongPhat.toLocaleString('vi-VN') + ' đ' : '—'}
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <span style={{ ...ts, padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>
+                                                {p.TrangThai}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
 const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
     const [docGiaId, setDocGiaId] = useState('');
     const [hanTra,   setHanTra]   = useState('');
@@ -44,7 +178,7 @@ const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
 
         for (const ma of validSachs) {
             const cuon = mockData.cuonsach.find(c => c.MaCuonSach === ma);
-            if (!cuon) { setMsg({ type: 'error', text: `Không tìm thấy cuốn sách: "${ma}"` }); return; }
+            if (!cuon)                         { setMsg({ type: 'error', text: `Không tìm thấy cuốn sách: "${ma}"` }); return; }
             if (cuon.TrangThai !== 'Sẵn sàng') { setMsg({ type: 'error', text: `Sách "${ma}" đang ${cuon.TrangThai}, không thể mượn!` }); return; }
         }
 
@@ -52,16 +186,19 @@ const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
         const maxNum = phieuList.reduce((m, p) => Math.max(m, parseInt(p.MaPhieu.replace('PM', ''))), 0);
         const newMa  = `PM${String(maxNum + 1).padStart(3, '0')}`;
 
-        setPhieuList(p => [...p, { MaPhieu: newMa, NgayLapPhieu: TODAY, MaThanhVien: docGiaId, HoTenDocGia: docGia?.HoTen || docGiaId, MaNhanVienLap: 'NV001', MaNhanVienThu: null, TrangThai: 'Đang mượn' }]);
+        setPhieuList(p => [...p, {
+            MaPhieu: newMa, NgayLapPhieu: TODAY,
+            MaThanhVien: docGiaId, HoTenDocGia: docGia?.HoTen || docGiaId,
+            MaNhanVienLap: 'NV001', MaNhanVienThu: null, TrangThai: 'Đang mượn'
+        }]);
+
         setMuonList(p => [...p, ...validSachs.map(ma => {
-            // Bước 1: Tìm cuốn sách theo mã → lấy MaDauSach
-            const cuon = mockData.cuonsach.find(c => c.MaCuonSach === ma);
-            // Bước 2: Tìm đầu sách theo MaDauSach → lấy TenSach
+            const cuon    = mockData.cuonsach.find(c => c.MaCuonSach === ma);
             const dauSach = mockData.dausach.find(b => b.MaDauSach === cuon?.MaDauSach);
             return { MaPhieu: newMa, MaCuonSach: ma, TenSach: dauSach?.TenSach || '—', HinhThucMuon: hinhThuc, HanTra: hanTra, NgayTraThucTe: null, TinhTrangKhiTra: null, TienPhatPhatSinh: 0 };
         })]);
 
-        setMsg({ type: 'success', text: `✅ Tạo phiếu mượn ${newMa} thành công! (${validSachs.length} cuốn sách)` });
+        setMsg({ type: 'success', text: `✅ Tạo phiếu ${newMa} thành công! (${validSachs.length} cuốn)` });
         setDocGiaId(''); setHanTra(''); setSachs(['']);
     };
 
@@ -74,7 +211,6 @@ const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
             <Alert msg={msg} />
             <form onSubmit={handleSubmit} style={{ background: 'white', padding: '22px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
 
-                {/* Chọn độc giả */}
                 <div style={{ marginBottom: '14px' }}>
                     <label style={L}>👤 Độc giả mượn sách <span style={{ color: 'red' }}>*</span></label>
                     <select value={docGiaId} onChange={e => setDocGiaId(e.target.value)} style={{ ...I, background: 'white' }}>
@@ -83,7 +219,6 @@ const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
                     </select>
                 </div>
 
-                {/* Ngày hẹn trả & Hình thức */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                     <div>
                         <label style={L}>📅 Ngày hẹn trả <span style={{ color: 'red' }}>*</span></label>
@@ -98,13 +233,12 @@ const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
                     </div>
                 </div>
 
-                {/* Danh sách mã sách */}
                 <div style={{ marginBottom: '18px' }}>
                     <label style={L}>📚 Mã cuốn sách cần mượn <span style={{ color: 'red' }}>*</span></label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                         {sachs.map((s, i) => (
                             <div key={i} style={{ display: 'flex', gap: '8px' }}>
-                                <input value={s} onChange={e => setRow(i, e.target.value)} style={{ ...I, flex: 1 }} placeholder={`VD: CS001_1, CS002_1`} />
+                                <input value={s} onChange={e => setRow(i, e.target.value)} style={{ ...I, flex: 1 }} placeholder="VD: CS001_2, CS002_1" />
                                 {sachs.length > 1 && <button type="button" onClick={() => removeRow(i)} style={{ padding: '0 10px', background: '#ffebee', color: '#c62828', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}>✕</button>}
                             </div>
                         ))}
@@ -123,7 +257,7 @@ const LapPhieuMuon = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
     );
 };
 
-// ─── Tab 2: Xử lý trả sách ───────────────────────────────
+
 const TraSach = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
     const [keyword,   setKeyword]   = useState('');
     const [found,     setFound]     = useState(null);
@@ -172,16 +306,13 @@ const TraSach = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
             <h3 style={{ margin: '0 0 16px', borderBottom: `2px solid ${G}`, paddingBottom: '8px', fontSize: '15px' }}>↩️ Xử lý Trả sách</h3>
             <Alert msg={msg} />
 
-            {/* Tìm phiếu */}
             <form onSubmit={doSearch} style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
                 <input value={keyword} onChange={e => setKeyword(e.target.value)} style={{ ...I, width: '220px' }} placeholder="Nhập mã phiếu (VD: PM001)" />
                 <button type="submit" style={{ padding: '9px 18px', background: G, color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>🔍 Tra cứu</button>
             </form>
 
-            {/* Kết quả */}
             {found && (
                 <div style={{ background: 'white', borderRadius: '10px', padding: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                    {/* Header phiếu */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '14px', padding: '12px', background: '#f9f9f9', borderRadius: '8px' }}>
                         {[['Mã phiếu', found.phieu.MaPhieu], ['Độc giả', found.phieu.HoTenDocGia], ['Ngày lập', found.phieu.NgayLapPhieu]].map(([k, v]) => (
                             <div key={k}><div style={{ fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>{k}</div><div style={{ fontWeight: '600', fontSize: '14px' }}>{v}</div></div>
@@ -189,7 +320,7 @@ const TraSach = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
                     </div>
 
                     {found.details.length === 0
-                        ? <p style={{ color: '#bbb', textAlign: 'center', padding: '14px' }}>Tất cả sách trong phiếu đã được trả.</p>
+                        ? <p style={{ color: '#bbb', textAlign: 'center', padding: '14px' }}>Tất cả sách đã được trả.</p>
                         : (
                             <>
                                 <p style={{ fontWeight: '600', fontSize: '13px', color: '#666', marginBottom: '8px' }}>Chọn cuốn sách cần trả:</p>
@@ -221,7 +352,6 @@ const TraSach = ({ phieuList, setPhieuList, muonList, setMuonList }) => {
     );
 };
 
-// ─── Tab 3: Danh sách phiếu mượn ─────────────────────────
 const DanhSachPhieu = ({ phieuList, muonList }) => {
     const [filter, setFilter] = useState('');
     const filtered = phieuList.filter(p => !filter || p.TrangThai === filter);
@@ -230,14 +360,23 @@ const DanhSachPhieu = ({ phieuList, muonList }) => {
         <div>
             <div style={{ display: 'flex', gap: '7px', marginBottom: '14px', flexWrap: 'wrap' }}>
                 {['', 'Đang mượn', 'Đã trả', 'Quá hạn'].map(s => (
-                    <button key={s} onClick={() => setFilter(s)} style={{ padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: '500', border: `1px solid ${filter === s ? G : '#ddd'}`, background: filter === s ? G : 'white', color: filter === s ? 'white' : '#777' }}>
+                    <button key={s} onClick={() => setFilter(s)} style={{
+                        padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+                        border:     `1px solid ${filter === s ? G : '#ddd'}`,
+                        background: filter === s ? G : 'white',
+                        color:      filter === s ? 'white' : '#777',
+                    }}>
                         {s || 'Tất cả'} ({s ? phieuList.filter(p => p.TrangThai === s).length : phieuList.length})
                     </button>
                 ))}
             </div>
             <div className="table-container">
                 <table>
-                    <thead><tr><th>Mã phiếu</th><th>Ngày lập</th><th>Độc giả</th><th>Sách mượn</th><th>Trạng thái</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Mã phiếu</th><th>Ngày lập</th><th>Độc giả</th><th>Sách mượn</th><th>Trạng thái</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {filtered.map(p => {
                             const s = TT_STYLE[p.TrangThai] || { background: '#eee', color: '#555' };
@@ -249,7 +388,7 @@ const DanhSachPhieu = ({ phieuList, muonList }) => {
                                     <td style={{ fontSize: '12px', color: '#555' }}>
                                         {muonList.filter(m => m.MaPhieu === p.MaPhieu).map(m => (
                                             <div key={m.MaCuonSach} style={{ marginBottom: '2px' }}>
-                                                <code style={{ fontSize: '11px', color: '#999' }}>{m.MaCuonSach}</code>
+                                                <code style={{ fontSize: '11px', color: '#aaa' }}>{m.MaCuonSach}</code>
                                                 <span style={{ marginLeft: '5px' }}>{m.TenSach}</span>
                                             </div>
                                         ))}
@@ -265,33 +404,48 @@ const DanhSachPhieu = ({ phieuList, muonList }) => {
     );
 };
 
-// ─── Main Component ───────────────────────────────────────
 const MuonSachManagement = ({ user }) => {
+    const isAdmin = user?.role === 'admin';
     const [tab,       setTab]       = useState('lap');
     const [phieuList, setPhieuList] = useState(mockData.phieumuon);
     const [muonList,  setMuonList]  = useState(mockData.muonsach);
 
+    if (!isAdmin) {
+        return (
+            <LichSuMuonCaNhan
+                user={user}
+                phieuList={phieuList}
+                muonList={muonList}
+            />
+        );
+    }
+
     const TABS = [
-        { key: 'lap',     label: '📋 Lập phiếu mượn'   },
-        { key: 'tra',     label: '↩️ Trả sách'          },
-        { key: 'danhsach',label: '📃 Danh sách phiếu'   },
+        { key: 'lap',      label: '📋 Lập phiếu mượn' },
+        { key: 'tra',      label: '↩️ Trả sách'        },
+        { key: 'danhsach', label: '📃 Danh sách phiếu' },
     ];
 
     return (
         <div>
             <h2 style={{ margin: '0 0 18px', color: '#222' }}>📦 Quản lý Mượn - Trả sách</h2>
 
-            {/* Tab buttons */}
-            <div style={{ display: 'flex', gap: '0', marginBottom: '22px', borderBottom: '2px solid #eee' }}>
+            <div style={{ display: 'flex', marginBottom: '22px', borderBottom: '2px solid #eee' }}>
                 {TABS.map(t => (
-                    <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: '9px 20px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: tab === t.key ? '700' : '400', color: tab === t.key ? G : '#888', borderBottom: tab === t.key ? `3px solid ${G}` : '3px solid transparent', marginBottom: '-2px' }}>
+                    <button key={t.key} onClick={() => setTab(t.key)} style={{
+                        padding: '9px 20px', background: 'none', border: 'none', cursor: 'pointer',
+                        fontSize: '14px', fontWeight: tab === t.key ? '700' : '400',
+                        color: tab === t.key ? G : '#888',
+                        borderBottom: tab === t.key ? `3px solid ${G}` : '3px solid transparent',
+                        marginBottom: '-2px',
+                    }}>
                         {t.label}
                     </button>
                 ))}
             </div>
 
             {tab === 'lap'      && <LapPhieuMuon phieuList={phieuList} setPhieuList={setPhieuList} muonList={muonList} setMuonList={setMuonList} />}
-            {tab === 'tra'      && <TraSach       phieuList={phieuList} setPhieuList={setPhieuList} muonList={muonList} setMuonList={setMuonList} />}
+            {tab === 'tra'      && <TraSach      phieuList={phieuList} setPhieuList={setPhieuList} muonList={muonList} setMuonList={setMuonList} />}
             {tab === 'danhsach' && <DanhSachPhieu phieuList={phieuList} muonList={muonList} />}
         </div>
     );

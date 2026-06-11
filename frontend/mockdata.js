@@ -1,6 +1,6 @@
 export const mockUsers = [
   { username: "nhanvien1", password: "123", role: "admin", name: "Thủ thư: Trang" },
-  { username: "docgia1",   password: "123", role: "guest", name: "Độc giả: Tuấn" }
+  { username: "docgia1",   password: "123", role: "guest", name: "Nguyễn Minh Tuấn", maThanhVien: "DG001" }
 ];
 
 export const mockData = {

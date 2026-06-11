@@ -111,7 +111,7 @@ const TTStyle = {
     'Quá hạn':   { background: '#ffebee', color: '#c62828' },
 };
 
-const Dashboard = ({ user }) => {
+const Dashboard = ({ user, onViewChange }) => {
     const { dashboard } = mockData;
     const [chartTab, setChartTab] = useState('bar');
 
@@ -182,7 +182,17 @@ const Dashboard = ({ user }) => {
 
             {/* Bảng phiếu mượn gần đây */}
             <div style={{ background: 'white', borderRadius: '10px', padding: '18px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <h3 style={{ margin: '0 0 14px', fontSize: '14px', color: '#333' }}>🕐 Phiếu mượn gần đây</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ margin: 0, fontSize: '14px', color: '#333' }}>🕐 Phiếu mượn gần đây</h3>
+                    <span
+                        onClick={() => onViewChange && onViewChange('muonsach')}
+                        style={{ fontSize: '13px', color: G, cursor: 'pointer', fontWeight: '600', textDecoration: 'none' }}
+                        onMouseEnter={e => e.target.style.textDecoration = 'underline'}
+                        onMouseLeave={e => e.target.style.textDecoration = 'none'}
+                    >
+                        Xem tất cả →
+                    </span>
+                </div>
                 <table>
                     <thead>
                         <tr>

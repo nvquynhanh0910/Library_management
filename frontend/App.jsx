@@ -33,12 +33,14 @@ function App() {
 
     const renderMainContent = () => {
         switch (currentView) {
+            // ── Trang cũ
             case "dausach":   return <BookManagement user={currentUser} />;
             case "cuonsach":  return <BookItemsManagement user={currentUser} />;
             case "theloai":   return <CategoryManagement user={currentUser} />;
             case "tacgia":    return <AuthorManagement user={currentUser} />;
             case "nxb":       return <PublisherManagement user={currentUser} />;
-            case "dashboard": return <Dashboard user={currentUser} />;
+            // ── Trang mới
+            case "dashboard": return <Dashboard user={currentUser} onViewChange={setCurrentView} />;
             case "docgia":    return <DocGiaManagement user={currentUser} />;
             case "nhanvien":  return <NhanVienManagement user={currentUser} />;
             case "muonsach":  return <MuonSachManagement user={currentUser} />;
@@ -52,7 +54,7 @@ function App() {
             user={currentUser}
             onLogout={handleLogout}
             onViewChange={setCurrentView}
-            currentView={currentView}     
+            currentView={currentView}       
         >
             {renderMainContent()}
         </MainLayout>

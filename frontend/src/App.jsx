@@ -15,50 +15,74 @@ import PhieuPhatManagement from './page/PhieuPhatManagement';
 
 function App() {
     const [currentUser, setCurrentUser] = useState(null);
-    const [currentView, setCurrentView] = useState("dausach"); // Mặc định hiển thị trang Đầu sách
+    // Khởi tạo trạng thái view mặc định là trang quản lý đầu sách
+    const [currentView, setCurrentView] = useState("dausach");
 
+    //xử lý đăng nhập
     const handleLogin = (user) => {
         setCurrentUser(user);
+
+        if (user?.role === 'admin') {
+            setCurrentView("dashboard"); //admin đăng nhập -> mặc định là trang dashboard
+        } else {
+            setCurrentView("dausach");    // Độc giả đăng nhập -> mặc định là trang Đầu sách
+        }
     };
 
+    //XỬ LÝ ĐĂNG XUẤT: reset state trạng thái cũ
     const handleLogout = () => {
         setCurrentUser(null);
+        setCurrentView("dausach");
     };
 
-    // 1. Kiểm tra đăng nhập
+    // Kiểm tra trạng thái đăng nhập
     if (!currentUser) {
         return <LoginPage onLogin={handleLogin} />;
     }
 
-    // 2. HÀM ĐIỀU PHỐI MÀN HÌNH - KHỚP TỪ KHÓA VỚI SIDEBAR
+    // HÀM ĐIỀU PHỐI MÀN HÌNH
     const renderMainContent = () => {
+        const isAdmin = currentUser?.role === 'admin';
+
         switch (currentView) {
             case "dashboard":
-                return <Dashboard1 user={currentUser} />;
+                //kiểm tra admin
+                return isAdmin ? <Dashboard1 user={currentUser} /> : <BookManagement user={currentUser} />;
+
             case "dausach":
                 return <BookManagement user={currentUser} />;
+
             case "cuonsach":
                 return <BookItemsManagement user={currentUser} />;
+
             case "theloai":
                 return <CategoryManagement user={currentUser} />;
+
             case "tacgia":
                 return <AuthorManagement user={currentUser} />;
+
             case "nxb":
                 return <PublisherManagement user={currentUser} />;
+
             case "muonsach":
                 return <MuonSachManagement user={currentUser} />;
+
             case "phieuphat":
                 return <PhieuPhatManagement user={currentUser} />;
+
+            //CÁC TAB HỆ THỐNG CHỈ ADMIN ĐƯỢC PHÉP TRUY CẬP
             case "docgia":
-                return <DocGiaManagement user={currentUser} />;
+                return isAdmin ? <DocGiaManagement user={currentUser} /> : <BookManagement user={currentUser} />;
+
             case "nhanvien":
-                return <NhanVienManagement user={currentUser} />;
+                return isAdmin ? <NhanVienManagement user={currentUser} /> : <BookManagement user={currentUser} />;
+
             default:
                 return <BookManagement user={currentUser} />;
         }
     };
 
-    // 3. TRUYỀN THUỘC TÍNH SANG MAINLAYOUT
+    // RENDER LAYOUT CHÍNH
     return (
         <MainLayout
             user={currentUser}

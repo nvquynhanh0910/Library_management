@@ -30,3 +30,5 @@ const PunishmentSlip = sequelize.define("PunishmentSlip",{
     tableName:"PhieuPhat",
     timestamps: false
 });
+
+module.exports = PunishmentSlip;

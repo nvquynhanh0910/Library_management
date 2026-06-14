@@ -23,7 +23,7 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate()
     console.log('Kết nối SQL Server thành công!')
-    await sequelize.sync({ alter: true })
+    await sequelize.sync({ alter: false })
     console.log('Đồng bộ bảng hoàn tất!')
   } catch (error) {
     console.error('Kết nối thất bại:', error.message)
@@ -31,5 +31,4 @@ const connectDB = async () => {
   }
 }
 
-connectDB();
 module.exports = { sequelize, connectDB }

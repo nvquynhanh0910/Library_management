@@ -55,7 +55,7 @@ const BookItemsManagement = ({ user }) => {
         setBookItems([...bookItems, ...fakeNewItems]);
         setIsAddModalOpen(false);
         setSoLuongThem(1);
-        alert(`🎉 Frontend đã đóng gói yêu cầu gửi Backend tạo tự động ${soLuongThem} cuốn sách!`);
+        //alert(`🎉 Frontend đã đóng gói yêu cầu gửi Backend tạo tự động ${soLuongThem} cuốn sách!`);
     };
 
     const filteredItems = bookItems.filter(item => {

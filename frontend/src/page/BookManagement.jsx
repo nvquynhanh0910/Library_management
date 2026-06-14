@@ -7,7 +7,7 @@ const BookManagement = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  //CÁC STATE QUẢN LÝ CHỨC NĂNG (MODAL POPUP)
+  // CÁC STATE QUẢN LÝ CHỨC NĂNG (MODAL POPUP)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
@@ -20,7 +20,7 @@ const BookManagement = ({ user }) => {
   // Kiểm tra quyền Admin
   const isAdmin = user?.role === 'admin';
 
-  // delete
+  //LOGIC XỬ LÝ CHỨC NĂNG XÓA (DELETE)
   const handleDeleteBook = (maDauSach, tenSach) => {
     const confirmDelete = window.confirm(`Xác nhận xóa đầu sách "${tenSach}" khỏi hệ thống không?`);
     if (confirmDelete) {
@@ -29,7 +29,7 @@ const BookManagement = ({ user }) => {
     }
   };
 
-  // edit
+  //LOGIC XỬ LÝ CHỨC NĂNG SỬA (EDIT)
   const handleOpenEditModal = (book) => {
     setEditingBook({ ...book });
     setIsEditModalOpen(true);
@@ -52,7 +52,7 @@ const BookManagement = ({ user }) => {
     alert("Cập nhật thông tin đầu sách thành công!");
   };
 
-  //thêm sách
+  // --- 5. LOGIC XỬ LÝ CHỨC NĂNG THÊM MỚI (ADD) ---
   const handleAddInputChange = (e) => {
     const { name, value } = e.target;
     setNewBook(prev => ({ ...prev, [name]: value }));
@@ -65,7 +65,7 @@ const BookManagement = ({ user }) => {
       MaDauSach: fakeGeneratedId,
       ...newBook,
       NamXB: parseInt(newBook.NamXB, 10),
-      SoLuong: 0 // Sách mới tạo có 0 bản sao, số lượng tự tăng khi nạp cuốn sách
+      SoLuong: 0 // Theo Cách 1: Sách mới tạo có 0 bản sao, số lượng tự tăng khi nạp cuốn sách
     };
 
     setBooks([...books, bookToAdd]);
@@ -74,6 +74,7 @@ const BookManagement = ({ user }) => {
     alert(`🎉 Thêm đầu sách mới thành công!`);
   };
 
+  //LOGIC TÌM KIẾM & LỌC (AN TOÀN NULL-SAFETY)
   const filteredBooks = books.filter(book => {
     const matchesSearch =
         book.MaDauSach.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -120,6 +121,7 @@ const BookManagement = ({ user }) => {
           </select>
         </div>
 
+        {/* Bảng dữ liệu đầu sách */}
         <div className="table-container">
           <table>
             <thead>
@@ -179,6 +181,7 @@ const BookManagement = ({ user }) => {
           </table>
         </div>
 
+        {/* --- FORM MODAL: THÊM ĐẦU SÁCH MỚI --- */}
         {isAddModalOpen && isAdmin && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
               <div style={{ background: 'white', padding: '30px', borderRadius: '8px', width: '450px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
@@ -216,6 +219,7 @@ const BookManagement = ({ user }) => {
             </div>
         )}
 
+        {/* --- FORM MODAL: CHỈNH SỬA ĐẦU SÁCH (ĐÃ XÓA Ô SỬA SỐ LƯỢNG) --- */}
         {isEditModalOpen && editingBook && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
               <div className="modal-content" style={{ background: 'white', padding: '30px', borderRadius: '8px', width: '450px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
@@ -231,4 +235,40 @@ const BookManagement = ({ user }) => {
 
                   <div style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Tác giả:</label>
-                    <input type="text"
+                    <input type="text" name="TenTacGia" value={editingBook.TenTacGia} onChange={handleInputChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ddd' }} required />
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Thể loại:</label>
+                    <input type="text" name="TenTheLoai" value={editingBook.TenTheLoai} onChange={handleInputChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ddd' }} required />
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Nhà xuất bản:</label>
+                    <input type="text" name="TenNXB" value={editingBook.TenNXB} onChange={handleInputChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ddd' }} required />
+                  </div>
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Năm XB:</label>
+                    <input type="number" name="NamXB" value={editingBook.NamXB} onChange={handleInputChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ddd' }} required />
+                  </div>
+
+                  {/* Nhóm nút điều khiển */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ padding: '8px 15px', background: '#e0e0e0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                      Hủy bỏ
+                    </button>
+                    <button type="submit" style={{ padding: '8px 15px', background: '#7DA78C', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Lưu thay đổi
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+        )}
+
+      </div>
+  );
+};
+
+export default BookManagement;

@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import './MainLayout.css';
 
 const MainLayout = ({ children, user, onLogout, onViewChange, currentView }) => {
+  const isAdmin = user?.role === 'admin';
+
+  // --- CẬP NHẬT: Tự động mở nhóm phù hợp tùy theo vai trò tài khoản khi vừa đăng nhập ---
   const [openGroups, setOpenGroups] = useState({
-    thongKe: true,   // Mở sẵn để thấy Dashboard ngay khi vào
+    thongKe: isAdmin, // Nếu là Admin thì mở sẵn THỐNG KÊ, nếu là Độc giả thì đóng
     khoSach: false,
-    dichVu:  false,
+    dichVu:  !isAdmin, // Nếu là Độc giả thì mở sẵn DỊCH VỤ để thấy Lịch sử mượn ngay
     heThong: false
   });
 
   const toggleGroup = (group) => {
     setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
   };
-
-  const isAdmin = user?.role === 'admin';
 
   return (
       <div className="admin-container">
@@ -33,18 +34,22 @@ const MainLayout = ({ children, user, onLogout, onViewChange, currentView }) => 
             <nav>
               <ul>
 
-                {/* ── THỐNG KÊ ── */}
-                <li className="menu-group" onClick={() => toggleGroup('thongKe')}>
-                  THỐNG KÊ {openGroups.thongKe ? '▾' : '▸'}
-                </li>
-                {openGroups.thongKe && (
-                    <li
-                        onClick={() => onViewChange("dashboard")}
-                        style={{ cursor: 'pointer', paddingLeft: '20px' }}
-                        className={currentView === "dashboard" ? "active" : ""}
-                    >
-                      📊 Dashboard
-                    </li>
+                {/* ── THỐNG KÊ (ĐÃ CẬP NHẬT: Chỉ hiển thị nếu là Admin) ── */}
+                {isAdmin && (
+                    <>
+                      <li className="menu-group" onClick={() => toggleGroup('thongKe')}>
+                        THỐNG KÊ {openGroups.thongKe ? '▾' : '▸'}
+                      </li>
+                      {openGroups.thongKe && (
+                          <li
+                              onClick={() => onViewChange("dashboard")}
+                              style={{ cursor: 'pointer', paddingLeft: '20px' }}
+                              className={currentView === "dashboard" ? "active" : ""}
+                          >
+                            📊 Dashboard
+                          </li>
+                      )}
+                    </>
                 )}
 
                 {/* ── QUẢN LÝ KHO SÁCH ── */}
@@ -60,8 +65,6 @@ const MainLayout = ({ children, user, onLogout, onViewChange, currentView }) => 
                       >
                         📚 Danh mục Đầu sách
                       </li>
-
-                      {/* ĐƯA CÁC MỤC NÀY RA NGOÀI BIẾN isAdmin ĐỂ ĐỘC GIẢ CŨNG THẤY */}
                       <li
                           onClick={() => onViewChange("cuonsach")}
                           style={{ cursor: 'pointer', paddingLeft: '20px' }}

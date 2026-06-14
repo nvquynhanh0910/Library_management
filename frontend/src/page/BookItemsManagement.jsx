@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { mockData } from '../data/mockdata';
 
+const GREEN = '#7DA78C';
+
 const BookItemsManagement = ({ user }) => {
     const [bookItems, setBookItems] = useState(mockData.cuonsach);
     const [searchTerm, setSearchTerm] = useState("");
@@ -10,12 +12,13 @@ const BookItemsManagement = ({ user }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
+    // Mặc định luôn khởi tạo TrangThai ban đầu của lô là 'Sẵn sàng'
     const [newItem, setNewItem] = useState({ MaDauSach: '', TinhTrang: 'Mới', TrangThai: 'Sẵn sàng' });
     const [soLuongThem, setSoLuongThem] = useState(1);
 
     const isAdmin = user?.role === 'admin';
 
-    //  Hàm này sẽ bắn gói tin lô dữ liệu lên API
+    // Hàm này sẽ bắn gói tin lô dữ liệu lên API
     const handleAddBookItem = (e) => {
         e.preventDefault();
         if (!newItem.MaDauSach) { alert("Vui lòng chọn Đầu sách!"); return; }
@@ -23,14 +26,14 @@ const BookItemsManagement = ({ user }) => {
         const payloadToBackend = {
             maDauSach: newItem.MaDauSach,
             tinhTrangBanDau: newItem.TinhTrang,
-            trangThaiBanDau: newItem.TrangThai,
+            trangThaiBanDau: 'Sẵn sàng', // Ép cứng giá trị mặc định gửi đi
             soLuongXuatBan: parseInt(soLuongThem, 10)
         };
 
         /* LUỒNG API THỰC TẾ:
         const response = await axios.post('http://localhost:5000/api/book-items/bulk', payloadToBackend);
         if(response.data.success) {
-            setBookItems([...bookItems, ...response.data.listNewBarcode]); // Nhận mảng các mã đã tạo từ database đổ vào bảng
+            setBookItems([...bookItems, ...response.data.listNewBarcode]);
         }
         */
 
@@ -48,14 +51,14 @@ const BookItemsManagement = ({ user }) => {
                 MaDauSach: newItem.MaDauSach,
                 TenSach: targetedDauSach ? targetedDauSach.TenSach : "Sách nhập lô bổ sung",
                 TinhTrang: newItem.TinhTrang,
-                TrangThai: newItem.TrangThai
+                TrangThai: 'Sẵn sàng' // Gán giá trị mặc định cho thực thể ảo
             });
         }
 
         setBookItems([...bookItems, ...fakeNewItems]);
         setIsAddModalOpen(false);
         setSoLuongThem(1);
-        //alert(`🎉 Frontend đã đóng gói yêu cầu gửi Backend tạo tự động ${soLuongThem} cuốn sách!`);
+        setNewItem({ MaDauSach: '', TinhTrang: 'Mới', TrangThai: 'Sẵn sàng' }); // Reset form
     };
 
     const filteredItems = bookItems.filter(item => {
@@ -119,6 +122,7 @@ const BookItemsManagement = ({ user }) => {
                 </table>
             </div>
 
+            {/* MODAL NHẬP KHO BẢN SAO */}
             {isAddModalOpen && isAdmin && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
                     <div style={{ background: 'white', padding: '30px', borderRadius: '8px', width: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
@@ -133,19 +137,14 @@ const BookItemsManagement = ({ user }) => {
                                     ))}
                                 </select>
                             </div>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Chất lượng:</label>
-                                    <select value={newItem.TinhTrang} onChange={e => setNewItem({ ...newItem, TinhTrang: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}>
-                                        <option value="Mới">Mới</option><option value="Cũ">Cũ</option>
-                                    </select>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Trạng thái:</label>
-                                    <select value={newItem.TrangThai} onChange={e => setNewItem({ ...newItem, TrangThai: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}>
-                                        <option value="Sẵn sàng">Sẵn sàng</option><option value="Đang mượn">Đang mượn</option>
-                                    </select>
-                                </div>
+
+                            {/* ĐÃ SỬA: Đưa ô chọn chất lượng về full-width và ẩn hoàn toàn ô lựa chọn trạng thái lưu thông */}
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px' }}>Chất lượng vật lý:</label>
+                                <select value={newItem.TinhTrang} onChange={e => setNewItem({ ...newItem, TinhTrang: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', background: 'white' }}>
+                                    <option value="Mới">Mới</option>
+                                    <option value="Cũ">Cũ</option>
+                                </select>
                             </div>
 
                             {/* Ô NHẬP SỐ LƯỢNG LÔ MỚI THÊM */}
@@ -155,8 +154,8 @@ const BookItemsManagement = ({ user }) => {
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: '8px 15px', background: '#e0e0e0', border: 'none', borderRadius: '4px' }}>Hủy</button>
-                                <button type="submit" style={{ padding: '8px 15px', background: '#7DA78C', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}>Xác nhận nhập kho</button>
+                                <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: '8px 15px', background: '#e0e0e0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Hủy</button>
+                                <button type="submit" style={{ padding: '8px 15px', background: '#7DA78C', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>Xác nhận nhập kho</button>
                             </div>
                         </form>
                     </div>

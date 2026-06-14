@@ -65,7 +65,7 @@ const BookManagement = ({ user }) => {
       MaDauSach: fakeGeneratedId,
       ...newBook,
       NamXB: parseInt(newBook.NamXB, 10),
-      SoLuong: 0 // Theo Cách 1: Sách mới tạo có 0 bản sao, số lượng tự tăng khi nạp cuốn sách
+      SoLuong: 0 // Sách mới tạo có 0 bản sao, số lượng tự tăng khi nạp cuốn sách
     };
 
     setBooks([...books, bookToAdd]);
@@ -181,7 +181,7 @@ const BookManagement = ({ user }) => {
           </table>
         </div>
 
-        {/* --- FORM MODAL: THÊM ĐẦU SÁCH MỚI --- */}
+        {/* FORM MODAL: THÊM ĐẦU SÁCH MỚI */}
         {isAddModalOpen && isAdmin && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
               <div style={{ background: 'white', padding: '30px', borderRadius: '8px', width: '450px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
@@ -219,7 +219,7 @@ const BookManagement = ({ user }) => {
             </div>
         )}
 
-        {/* --- FORM MODAL: CHỈNH SỬA ĐẦU SÁCH (ĐÃ XÓA Ô SỬA SỐ LƯỢNG) --- */}
+        {/*FORM MODAL: CHỈNH SỬA ĐẦU SÁCH*/}
         {isEditModalOpen && editingBook && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
               <div className="modal-content" style={{ background: 'white', padding: '30px', borderRadius: '8px', width: '450px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>

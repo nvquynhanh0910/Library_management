@@ -10,8 +10,9 @@ const Borrowing = sequelize.define("Borrowing",{
         type: DataTypes.STRING(20),
         primaryKey: true,
     },
-    HinhThucMuon:{
-        type: DataTypes.STRING(20),
+    HinhThucMuon: {
+        type: DataTypes.STRING(50),
+        defaultValue: 'Trực tiếp'
     },
     HanTra:{
         type: DataTypes.DATE,
@@ -23,7 +24,7 @@ const Borrowing = sequelize.define("Borrowing",{
     TinhTrangKhiTra:{
         type: DataTypes.STRING(50),
     },
-    TienTraPhatSinh:{
+    TienPhatPhatSinh:{
         type: DataTypes.DECIMAL(10,2),
         defaultValue: 0.00,
     }

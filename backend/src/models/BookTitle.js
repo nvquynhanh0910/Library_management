@@ -13,6 +13,10 @@ const BookTitle = sequelize.define("BookTitle",{
     NamXB:{
         type: DataTypes.INTEGER,
     },
+    SoLuong: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
     NoiDung:{
         type: DataTypes.TEXT,
     },

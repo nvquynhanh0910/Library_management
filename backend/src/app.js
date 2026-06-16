@@ -1,8 +1,13 @@
 const express = require('express');
 const app = express();
 const { connectDB } = require('./config/database');
+const cors = require('cors');
 require('dotenv').config();
 
+app.use(cors({
+    origin: 'http://localhost:5173',  // địa chỉ frontend Vite
+    credentials: true
+}));
 app.use(express.json());
 
 // ===== ROUTES =====

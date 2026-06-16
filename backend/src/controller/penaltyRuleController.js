@@ -26,6 +26,8 @@ const createPenaltyRule = async (req, res) => {
         const { TenHinhPhat, MucPhat } = req.body;
         if (!TenHinhPhat || MucPhat === undefined)
             return res.status(400).json({ message: 'Thiếu tên hình phạt hoặc mức phạt' });
+        const exists = await PenaltyRule.findOne({ where: { TenHinhPhat } });
+        if (exists) return res.status(400).json({ message: 'Hình phạt đã tồn tại' });
         const rule = await PenaltyRule.create({ TenHinhPhat, MucPhat });
         res.status(201).json(rule);
     } catch (err) {

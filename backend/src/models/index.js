@@ -1,4 +1,4 @@
-const sequelize = require('../config/database');
+const {sequelize} = require('../config/database');
 
 const Category = require('./Category');
 const Author = require('./Author');
@@ -27,6 +27,9 @@ Book.belongsTo(BookTitle,{foreignKey:'MaDauSach'});
 
 Publisher.hasMany(BookTitle,{foreignKey:'MaNXB'});
 BookTitle.belongsTo(Publisher,{foreignKey:'MaNXB'});
+
+Category.hasMany(BookTitle, { foreignKey: 'MaTheLoai' });
+BookTitle.belongsTo(Category, { foreignKey: 'MaTheLoai' });
 
 BorrowingSlip.hasMany(Borrowing, { foreignKey: 'MaPhieu' });
 Borrowing.belongsTo(BorrowingSlip, { foreignKey: 'MaPhieu' });

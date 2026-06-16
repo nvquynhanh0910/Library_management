@@ -6,8 +6,16 @@ const Book = sequelize.define("Book",{
         type: DataTypes.STRING(20),
         primaryKey: true,
     },
-    TinhTrang:{
+    TinhTrang: {
+        type: DataTypes.STRING(50),
+        defaultValue: 'Sẵn sàng'
+    },
+    ChatLuong: {
         type: DataTypes.STRING(20),
+        defaultValue: 'Mới',
+        validate: {
+            isIn: [['Mới', 'Cũ']]
+        }
     },
     MaDauSach:{
         type: DataTypes.STRING(20),

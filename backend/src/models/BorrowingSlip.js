@@ -10,6 +10,9 @@ const BorrowingSlip = sequelize.define("BorrowingSlip",{
         type: DataTypes.DATE,
         allowNull: false,
     },
+    MaThanhVien:{ // <--- THÊM TRƯỜNG NÀY VÀO
+        type: DataTypes.STRING(20),
+    },
     MaNhanVienLap:{
         type: DataTypes.STRING(20),
     },

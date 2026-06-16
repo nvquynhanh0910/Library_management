@@ -1,4 +1,4 @@
-const { Category } = require('../models');
+const { Category, BookTitle } = require('../models'); // thêm BookTitle
  
 // GET /api/categories
 const getAllCategories = async (req, res) => {
@@ -23,9 +23,16 @@ const getCategoryById = async (req, res) => {
 // POST /api/categories
 const createCategory = async (req, res) => {
     try {
-        const { MaTheLoai, TenTheLoai } = req.body;
-        if (!MaTheLoai || !TenTheLoai)
-            return res.status(400).json({ message: 'Thiếu mã hoặc tên thể loại' });
+        const { TenTheLoai } = req.body;
+        if (!TenTheLoai) return res.status(400).json({ message: 'Thiếu tên thể loại' });
+
+        const exists = await Category.findOne({ where: { TenTheLoai } });
+        if (exists) return res.status(400).json({ message: 'Thể loại đã tồn tại' });
+
+        const lastCategory = await Category.findOne({ order: [['MaTheLoai', 'DESC']] });
+        const lastNum = lastCategory ? parseInt(lastCategory.MaTheLoai.replace('TL', '')) : 0;
+        const MaTheLoai = `TL${String(lastNum + 1).padStart(4, '0')}`;
+
         const cat = await Category.create({ MaTheLoai, TenTheLoai });
         res.status(201).json(cat);
     } catch (err) {
@@ -50,6 +57,8 @@ const deleteCategory = async (req, res) => {
     try {
         const cat = await Category.findByPk(req.params.id);
         if (!cat) return res.status(404).json({ message: 'Không tìm thấy thể loại' });
+
+        await BookTitle.update({ MaTheLoai: null }, { where: { MaTheLoai: req.params.id } });
         await cat.destroy();
         res.json({ message: 'Xóa thể loại thành công' });
     } catch (err) {

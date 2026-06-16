@@ -1,4 +1,4 @@
-const{protect, memberProtect, anyProtect} = require('../middleware/auth');
+const { protect, memberProtect, anyProtect } = require('../middleware/auth');
 const express = require('express');
 const router = express.Router();
 const {
@@ -7,26 +7,15 @@ const {
     createBookTitle,
     updateBookTitle,
     deleteBookTitle,
-    searchBooks
+    searchBooks 
 } = require('../controller/bookTitleController');
-
-// GET /api/books/search?theloai=TL001&nxb=NXB001&tacgia=TG001&tensach=clean
+// api là api/book-titles
 // Phải đặt trước /:id để tránh bị nhầm "search" là một id
-router.get('/search',anyProtect,searchBooks);
-
-// GET /api/books
-router.get('/', anyProtect,getAllBookTitles);
-
-// GET /api/books/:id
-router.get('/:id', getBookTitleById);
-
-// POST /api/books
-router.post('/',protect,createBookTitle);
-
-// PUT /api/books/:id
-router.put('/:id',protect,updateBookTitle);
-
-// DELETE /api/books/:id
-router.delete('/:id',protect,deleteBookTitle);
+router.get('/search', anyProtect, searchBooks);  // GET /api/book-titles/search?TenSach=Mắt
+router.get('/', anyProtect, getAllBookTitles);    // GET /api/book-titles
+router.get('/:id', anyProtect, getBookTitleById);// GET /api/book-titles/:id
+router.post('/', protect, createBookTitle);       // POST /api/book-titles
+router.put('/:id', protect, updateBookTitle);     // PUT /api/book-titles/:id
+router.delete('/:id', protect, deleteBookTitle);  // DELETE /api/book-titles/:id
 
 module.exports = router;

@@ -44,8 +44,12 @@ const updateBookTitle = async (req, res) => {
         // Xử lý thể loại
         let MaTheLoai = null;
         if (TenTheLoai) {
-            const countTheLoai = await Category.count();
-            const newMaTheLoai = `TL${String(countTheLoai + 1).padStart(4, '0')}`;
+            const allCats = await Category.findAll({ attributes: ['MaTheLoai'] });
+            const maxTL = allCats.reduce((max, c) => {
+                const num = parseInt(c.MaTheLoai.replace('TL', '')) || 0;
+                return num > max ? num : max;
+            }, 0);
+            const newMaTheLoai = `TL${String(maxTL + 1).padStart(4, '0')}`;
             await Category.findOrCreate({
                 where: { TenTheLoai },
                 defaults: { MaTheLoai: newMaTheLoai, TenTheLoai }
@@ -57,8 +61,12 @@ const updateBookTitle = async (req, res) => {
         // Xử lý nhà xuất bản
         let MaNXB = null;
         if (TenNXB) {
-            const countNXB = await Publisher.count();
-            const newMaNXB = `NXB${String(countNXB + 1).padStart(4, '0')}`;
+            const allPubs = await Publisher.findAll({ attributes: ['MaNXB'] });
+            const maxNXB = allPubs.reduce((max, p) => {
+                const num = parseInt(p.MaNXB.replace('NXB', '')) || 0;
+                return num > max ? num : max;
+            }, 0);
+            const newMaNXB = `NXB${String(maxNXB + 1).padStart(4, '0')}`;
             await Publisher.findOrCreate({
                 where: { TenNXB },
                 defaults: { MaNXB: newMaNXB, TenNXB, DiaChi, SoDienThoai }
@@ -78,9 +86,13 @@ const updateBookTitle = async (req, res) => {
         // Xử lý tác giả
         if (TacGia && TacGia.length > 0) {
             await WritingBook.destroy({ where: { MaDauSach: req.params.id } });
+            const allAuthors = await Author.findAll({ attributes: ['MaTacGia'] });
             for (const tg of TacGia) {
-                const countTG = await Author.count();
-                const newMaTacGia = `TG${String(countTG + 1).padStart(4, '0')}`;
+                const maxTG = allAuthors.reduce((max, a) => {
+                    const num = parseInt(a.MaTacGia.replace('TG', '')) || 0;
+                    return num > max ? num : max;
+                }, 0);
+                const newMaTacGia = `TG${String(maxTG + 1).padStart(4, '0')}`;
                 const [author] = await Author.findOrCreate({
                     where: { TenTacGia: tg.TenTacGia },
                     defaults: { MaTacGia: newMaTacGia, TenTacGia: tg.TenTacGia, QuocTich: tg.QuocTich }
@@ -105,16 +117,23 @@ const createBookTitle = async (req, res) => {
         const exists = await BookTitle.findOne({ where: { TenSach } });
         if (exists) return res.status(400).json({ message: 'Đầu sách đã tồn tại' });
 
-        // Tự generate MaDauSach
-        const lastBook = await BookTitle.findOne({ order: [['MaDauSach', 'DESC']] });
-        const lastNum = lastBook ? parseInt(lastBook.MaDauSach.replace('DS', '')) : 0;
-        const MaDauSach = `DS${String(lastNum + 1).padStart(4, '0')}`;
+        // Tự generate MaDauSach — dùng MAX số thứ tự để tránh lỗi sort string
+        const allBooks = await BookTitle.findAll({ attributes: ['MaDauSach'] });
+        const maxNum = allBooks.reduce((max, b) => {
+            const num = parseInt(b.MaDauSach.replace('DS', '')) || 0;
+            return num > max ? num : max;
+        }, 0);
+        const MaDauSach = `DS${String(maxNum + 1).padStart(4, '0')}`;
 
         // Xử lý thể loại
         let MaTheLoai = null;
         if (TenTheLoai) {
-            const countTheLoai = await Category.count();
-            const newMaTheLoai = `TL${String(countTheLoai + 1).padStart(4, '0')}`;
+            const allCats = await Category.findAll({ attributes: ['MaTheLoai'] });
+            const maxTL = allCats.reduce((max, c) => {
+                const num = parseInt(c.MaTheLoai.replace('TL', '')) || 0;
+                return num > max ? num : max;
+            }, 0);
+            const newMaTheLoai = `TL${String(maxTL + 1).padStart(4, '0')}`;
             await Category.findOrCreate({
                 where: { TenTheLoai },
                 defaults: { MaTheLoai: newMaTheLoai, TenTheLoai }
@@ -126,8 +145,12 @@ const createBookTitle = async (req, res) => {
         // Xử lý nhà xuất bản
         let MaNXB = null;
         if (TenNXB) {
-            const countNXB = await Publisher.count();
-            const newMaNXB = `NXB${String(countNXB + 1).padStart(4, '0')}`;
+            const allPubs = await Publisher.findAll({ attributes: ['MaNXB'] });
+            const maxNXB = allPubs.reduce((max, p) => {
+                const num = parseInt(p.MaNXB.replace('NXB', '')) || 0;
+                return num > max ? num : max;
+            }, 0);
+            const newMaNXB = `NXB${String(maxNXB + 1).padStart(4, '0')}`;
             await Publisher.findOrCreate({
                 where: { TenNXB },
                 defaults: { MaNXB: newMaNXB, TenNXB }
@@ -141,8 +164,12 @@ const createBookTitle = async (req, res) => {
 
         // Xử lý tác giả
         if (TenTacGia) {
-            const countTG = await Author.count();
-            const MaTacGia = `TG${String(countTG + 1).padStart(4, '0')}`;
+            const allAuthors = await Author.findAll({ attributes: ['MaTacGia'] });
+            const maxTG = allAuthors.reduce((max, a) => {
+                const num = parseInt(a.MaTacGia.replace('TG', '')) || 0;
+                return num > max ? num : max;
+            }, 0);
+            const MaTacGia = `TG${String(maxTG + 1).padStart(4, '0')}`;
             const [author] = await Author.findOrCreate({
                 where: { TenTacGia },
                 defaults: { MaTacGia, TenTacGia }

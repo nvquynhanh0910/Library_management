@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { mockData } from '../data/mockdata';
+import React, { useState, useEffect } from 'react';
+import api from '../api/axios';
 
 const GREEN = '#7DA78C';
 
@@ -142,13 +142,25 @@ const StatCard = ({ icon, label, value, sub, color = GREEN }) => (
 // ─── MAIN COMPONENT: DASHBOARD THỐNG KÊ ──────────────────────
 // ════════════════════════════════════════════════════════════
 const Dashboard = ({ user }) => {
-    const { dashboard } = mockData;
+    const [data, setData]       = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError]     = useState('');
+
+    useEffect(() => {
+        api.get('/dashboard')
+            .then(res => setData(res.data))
+            .catch(err => setError(err.response?.data?.message || err.message))
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) return <p style={{ textAlign: 'center', color: '#888', marginTop: '60px' }}>⏳ Đang tải dữ liệu...</p>;
+    if (error)   return <p style={{ textAlign: 'center', color: 'red', marginTop: '60px' }}>❌ {error}</p>;
 
     const cards = [
-        { icon: '📚', label: 'Tổng đầu sách',    value: dashboard.tongDauSach,  sub: `${dashboard.tongCuonSach} bản sao`,   color: GREEN       },
-        { icon: '🔄', label: 'Đang được mượn',   value: dashboard.dangMuon,     sub: 'cuốn chưa trả',                       color: '#f0ad4e'   },
-        { icon: '⚠️', label: 'Quá hạn trả',      value: dashboard.quaHan,       sub: 'cần xử lý ngay',                      color: '#d9534f'   },
-        { icon: '👤', label: 'Độc giả',           value: dashboard.tongDocGia,   sub: `${dashboard.tongNhanVien} nhân viên` , color: '#5bc0de'   },
+        { icon: '📚', label: 'Tổng đầu sách',  value: data.tongDauSach,  sub: `${data.tongCuonSach} bản sao`,    color: GREEN     },
+        { icon: '🔄', label: 'Đang được mượn', value: data.dangMuon,     sub: 'cuốn chưa trả',                   color: '#f0ad4e' },
+        { icon: '⚠️', label: 'Quá hạn trả',    value: data.quaHan,       sub: 'cần xử lý ngay',                  color: '#d9534f' },
+        { icon: '👤', label: 'Độc giả',         value: data.tongDocGia,   sub: `${data.tongNhanVien} nhân viên`,  color: '#5bc0de' },
     ];
 
     return (
@@ -180,13 +192,13 @@ const Dashboard = ({ user }) => {
                     <h3 style={{ margin: '0 0 16px', fontSize: '15px', color: '#333' }}>
                         🏆 Top 5 sách được mượn nhiều nhất
                     </h3>
-                    <BarChart data={dashboard.topSach} />
+                    <BarChart data={data.topSach} />
                 </div>
 
                 {/* 2. Ô Biểu đồ tròn Thể loại (Cố định ở trên bên phải) */}
                 <div style={{ background: 'white', borderRadius: '10px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
                     <h3 style={{ margin: '0 0 16px', fontSize: '15px', color: '#333' }}>🥧 Tỉ lệ mượn theo Thể loại</h3>
-                    <PieChart data={dashboard.theoTheLoai} />
+                    <PieChart data={data.theoTheLoai} />
                 </div>
 
                 {/* 3. Ô Biểu đồ Đường tách riêng (Nằm ở dưới và kéo dài full-width) */}
@@ -212,7 +224,7 @@ const Dashboard = ({ user }) => {
                             </span>
                         </div>
                     </div>
-                    <LineChart data={dashboard.theoThang} />
+                    <LineChart data={data.theoThang} />
                 </div>
 
             </div>

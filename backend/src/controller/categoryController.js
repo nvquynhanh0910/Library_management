@@ -29,9 +29,12 @@ const createCategory = async (req, res) => {
         const exists = await Category.findOne({ where: { TenTheLoai } });
         if (exists) return res.status(400).json({ message: 'Thể loại đã tồn tại' });
 
-        const lastCategory = await Category.findOne({ order: [['MaTheLoai', 'DESC']] });
-        const lastNum = lastCategory ? parseInt(lastCategory.MaTheLoai.replace('TL', '')) : 0;
-        const MaTheLoai = `TL${String(lastNum + 1).padStart(4, '0')}`;
+        const allCats = await Category.findAll({ attributes: ['MaTheLoai'] });
+        const maxNum = allCats.reduce((max, c) => {
+            const num = parseInt(c.MaTheLoai.replace('TL', '')) || 0;
+            return num > max ? num : max;
+        }, 0);
+        const MaTheLoai = `TL${String(maxNum + 1).padStart(4, '0')}`;
 
         const cat = await Category.create({ MaTheLoai, TenTheLoai });
         res.status(201).json(cat);

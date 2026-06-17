@@ -13,9 +13,12 @@ const createPublisher = async (req, res) => {
         const exists = await Publisher.findOne({ where: { TenNXB } });
         if (exists) return res.status(400).json({ message: 'NXB đã tồn tại' });
 
-        const lastPublisher = await Publisher.findOne({ order: [['MaNXB', 'DESC']] });
-        const lastNum = lastPublisher ? parseInt(lastPublisher.MaNXB.replace('NXB', '')) : 0;
-        const MaNXB = `NXB${String(lastNum + 1).padStart(4, '0')}`;
+        const allPubs = await Publisher.findAll({ attributes: ['MaNXB'] });
+        const maxNum = allPubs.reduce((max, p) => {
+            const num = parseInt(p.MaNXB.replace('NXB', '')) || 0;
+            return num > max ? num : max;
+        }, 0);
+        const MaNXB = `NXB${String(maxNum + 1).padStart(4, '0')}`;
 
         res.status(201).json(await Publisher.create({ MaNXB, TenNXB, DiaChi, SoDienThoai }));
     } catch (err) { res.status(500).json({ message: err.message }); }

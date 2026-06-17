@@ -15,9 +15,12 @@ const createAuthor = async (req, res) => {
         const exists = await Author.findOne({ where: { TenTacGia } });
         if (exists) return res.status(400).json({ message: 'Tác giả đã tồn tại' });
 
-        const lastAuthor = await Author.findOne({ order: [['MaTacGia', 'DESC']] });
-        const lastNum = lastAuthor ? parseInt(lastAuthor.MaTacGia.replace('TG', '')) : 0;
-        const MaTacGia = `TG${String(lastNum + 1).padStart(4, '0')}`;
+        const allAuthors = await Author.findAll({ attributes: ['MaTacGia'] });
+        const maxNum = allAuthors.reduce((max, a) => {
+            const num = parseInt(a.MaTacGia.replace('TG', '')) || 0;
+            return num > max ? num : max;
+        }, 0);
+        const MaTacGia = `TG${String(maxNum + 1).padStart(4, '0')}`;
 
         res.status(201).json(await Author.create({ MaTacGia, TenTacGia, QuocTich }));
     } catch (err) { res.status(500).json({ message: err.message }); }

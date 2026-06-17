@@ -13,6 +13,13 @@ const BorrowingSlip = sequelize.define("BorrowingSlip",{
     MaThanhVien:{ // <--- THÊM TRƯỜNG NÀY VÀO
         type: DataTypes.STRING(20),
     },
+    TrangThai: {
+        type: DataTypes.STRING(20),
+        defaultValue: 'Đang mượn',
+        validate: {
+            isIn: [['Đang mượn', 'Đã trả', 'Trả muộn']]
+        }
+    },
     MaNhanVienLap:{
         type: DataTypes.STRING(20),
     },

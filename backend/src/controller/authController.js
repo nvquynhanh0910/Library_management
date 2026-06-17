@@ -2,6 +2,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User, Member } = require('../models');
 
+const getNextMaPhieu = async (Model, field, prefix) => {
+    const tableName = Model.getTableName();
+    const [[row]] = await Model.sequelize.query(
+        `SELECT MAX([${field}]) AS maxMa FROM [${tableName}]`
+    );
+    const last = row?.maxMa;
+    const max = last ? parseInt(last.replace(prefix, ''), 10) : 0;
+    return `${prefix}${String(max + 1).padStart(4, '0')}`;
+};
+
 // ==================== NHÂN VIÊN ====================
 
 // POST /api/auth/login
@@ -45,8 +55,7 @@ const register = async (req, res) => {
         const exists = await User.findOne({ where: { Username } });
         if (exists) return res.status(400).json({ message: 'Username đã tồn tại' });
 
-        const count = await User.count();
-        const MaNhanVien = `NV${String(count + 1).padStart(4, '0')}`;
+        const MaNhanVien = await getNextMaPhieu(User, 'MaNhanVien', 'NV');
         const hashed = await bcrypt.hash(Password, 10);
 
         const user = await User.create({ MaNhanVien, TenNhanVien, ChucVu, Username, Password: hashed });
@@ -101,8 +110,7 @@ const memberRegister = async (req, res) => {
         const exists = await Member.findOne({ where: { Email } });
         if (exists) return res.status(400).json({ message: 'Email đã tồn tại' });
 
-        const count = await Member.count();
-        const MaThanhVien = `TV${String(count + 1).padStart(4, '0')}`;
+        const MaThanhVien = await getNextMaPhieu(Member, 'MaThanhVien', 'TV');
         const hashed = await bcrypt.hash(MatKhau, 10);
 
         const member = await Member.create({ MaThanhVien, HoTen, Email, SoDienThoai, MatKhau: hashed });

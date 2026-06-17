@@ -1,6 +1,17 @@
 const { PunishmentSlip, PenaltyRule, BorrowingSlip, Borrowing, Book, BookTitle, Member } = require('../models');
 const { Op } = require('sequelize');
 
+const getNextMaPhieu = async (Model, field, prefix) => {
+    const tableName = Model.getTableName();
+    const [[row]] = await Model.sequelize.query(
+        `SELECT MAX([${field}]) AS maxMa FROM [${tableName}]`
+    );
+    const last = row?.maxMa;
+    const max = last ? parseInt(last.replace(prefix, ''), 10) : 0;
+    return `${prefix}${String(max + 1).padStart(4, '0')}`;
+};
+
+
 const includeDetail = [
     { model: PenaltyRule, attributes: ['TenHinhPhat', 'MucPhat'] },
     {
@@ -77,8 +88,7 @@ const createPunishmentSlip = async (req, res) => {
         const TongTienPhat = penaltyRule.MucPhat;
 
         // Tự generate MaPhieuPhat
-        const count = await PunishmentSlip.count();
-        const MaPhieuPhat = `PP${String(count + 1).padStart(4, '0')}`;
+        const MaPhieuPhat = await getNextMaPhieu(PunishmentSlip, 'MaPhieuPhat', 'PP');
 
         const slip = await PunishmentSlip.create({
             MaPhieuPhat,

@@ -1,6 +1,17 @@
 const { BorrowingSlip, Borrowing, Book, BookTitle, Member, User, PenaltyRule, PunishmentSlip } = require('../models');
 const { Op } = require('sequelize');
 
+const getNextMaPhieu = async (Model, field, prefix) => {
+    const tableName = Model.getTableName();
+    const [[row]] = await Model.sequelize.query(
+        `SELECT MAX([${field}]) AS maxMa FROM [${tableName}]`
+    );
+    const last = row?.maxMa;
+    const max = last ? parseInt(last.replace(prefix, ''), 10) : 0;
+    return `${prefix}${String(max + 1).padStart(4, '0')}`;
+};
+
+
 const includeAll = [
     { model: Member, attributes: ['MaThanhVien', 'HoTen', 'SoDienThoai'] },
     { model: User, as: 'NguoiLap', attributes: ['MaNhanVien', 'TenNhanVien'] },
@@ -70,14 +81,14 @@ const createBorrowingSlip = async (req, res) => {
                 return res.status(400).json({ message: `Cuốn sách ${ma} không sẵn sàng để mượn` });
         }
 
-        const count = await BorrowingSlip.count();
-        const MaPhieu = `PM${String(count + 1).padStart(4, '0')}`;
+        const MaPhieu = await getNextMaPhieu(BorrowingSlip, 'MaPhieu', 'PM');
 
         const slip = await BorrowingSlip.create({
             MaPhieu,
             NgayLapPhieu: new Date(),
             MaThanhVien,
-            MaNhanVienLap: req.user.MaNhanVien
+            MaNhanVienLap: req.user.MaNhanVien,
+            TrangThai: 'Đang mượn'  // FIX: khởi tạo TrangThai
         });
 
         for (const ma of cuonSach) {
@@ -98,53 +109,119 @@ const returnBooks = async (req, res) => {
         const slip = await BorrowingSlip.findByPk(req.params.id);
         if (!slip) return res.status(404).json({ message: 'Không tìm thấy phiếu mượn' });
 
-        const { MaCuonSach, TinhTrangKhiTra } = req.body;
-        if (!MaCuonSach) return res.status(400).json({ message: 'Thiếu mã cuốn sách' });
+        // FIX: nhận mảng DanhSachSach thay vì 1 MaCuonSach
+        const { DanhSachSach, TinhTrangKhiTra } = req.body;
+        if (!DanhSachSach || !DanhSachSach.length)
+            return res.status(400).json({ message: 'Thiếu danh sách cuốn sách cần trả' });
 
-        await Borrowing.update(
-            { NgayTraThucTe: new Date(), TinhTrangKhiTra: TinhTrangKhiTra || 'Tốt' },
-            { where: { MaPhieu: req.params.id, MaCuonSach } }
-        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        if (['Hỏng', 'Mất'].includes(TinhTrangKhiTra)) {
-            // Tìm quy tắc phạt và tạo phiếu phạt tự động
-            const penaltyRule = await PenaltyRule.findOne({ where: { TenHinhPhat: TinhTrangKhiTra } });
-            if (penaltyRule) {
-                const count = await PunishmentSlip.count();
-                const MaPhieuPhat = `PP${String(count + 1).padStart(4, '0')}`;
+        for (const { MaCuonSach } of DanhSachSach) {
+            const borrowing = await Borrowing.findOne({
+                where: { MaPhieu: req.params.id, MaCuonSach }
+            });
+            if (!borrowing) continue;
 
-                await PunishmentSlip.create({
-                    MaPhieuPhat,
-                    NgayLapPhieu: new Date(),
-                    TongTienPhat: penaltyRule.MucPhat,
-                    TrangThaiThanhToan: 'Chưa thanh toán',
-                    TenHinhPhat: TinhTrangKhiTra,
-                    MaPhieu: req.params.id,
-                    MaCuonSach
+            const hanTra = new Date(borrowing.HanTra);
+            hanTra.setHours(0, 0, 0, 0);
+            const isLate = today > hanTra;
+
+            // FIX: map tình trạng frontend → backend
+            // Frontend gửi: 'Tốt' | 'Có hư hỏng nhẹ' | 'Hư hỏng nặng' | 'Mất sách'
+            // PenaltyRule dùng: 'Hỏng' | 'Mất'
+            const tinhTrangMap = {
+                'Tốt':             'Tốt',
+                'Có hư hỏng nhẹ': 'Có hư hỏng nhẹ',
+                'Hư hỏng nặng':   'Hỏng',
+                'Mất sách':        'Mất'
+            };
+            const tinhTrangDB = tinhTrangMap[TinhTrangKhiTra] || TinhTrangKhiTra;
+
+            await Borrowing.update(
+                { NgayTraThucTe: new Date(), TinhTrangKhiTra: TinhTrangKhiTra },
+                { where: { MaPhieu: req.params.id, MaCuonSach } }
+            );
+
+            let tienPhat = 0;
+
+            // Phạt quá hạn — TenHinhPhat trong PenaltyRule là 'Phạt quá hạn', MucPhat là tiền/ngày
+            if (isLate) {
+                const soNgayTre = Math.ceil((today - hanTra) / (1000 * 60 * 60 * 24));
+                const lateRule = await PenaltyRule.findOne({
+                    where: { TenHinhPhat: 'Phạt quá hạn' }
                 });
+                if (lateRule) {
+                    const tienPhatLate = lateRule.MucPhat * soNgayTre;
+                    tienPhat += tienPhatLate;
+                    const MaPhieuPhat = await getNextMaPhieu(PunishmentSlip, 'MaPhieuPhat', 'PP');
+                    await PunishmentSlip.create({
+                        MaPhieuPhat,
+                        NgayLapPhieu: new Date(),
+                        TongTienPhat: tienPhatLate,
+                        TrangThaiThanhToan: 'Chưa thanh toán',
+                        TenHinhPhat: 'Phạt quá hạn',
+                        MaPhieu: req.params.id,
+                        MaCuonSach
+                    });
+                }
+            }
 
+            // Phạt hư hỏng / mất — TenHinhPhat khớp đúng giá trị dropdown: 'Có hư hỏng nhẹ', 'Hỏng', 'Mất'
+            if (['Có hư hỏng nhẹ', 'Hỏng', 'Mất'].includes(TinhTrangKhiTra)) {
+                const damageRule = await PenaltyRule.findOne({
+                    where: { TenHinhPhat: TinhTrangKhiTra }
+                });
+                if (damageRule) {
+                    tienPhat += damageRule.MucPhat;
+                    const MaPhieuPhat = await getNextMaPhieu(PunishmentSlip, 'MaPhieuPhat', 'PP');
+                    await PunishmentSlip.create({
+                        MaPhieuPhat,
+                        NgayLapPhieu: new Date(),
+                        TongTienPhat: damageRule.MucPhat,
+                        TrangThaiThanhToan: 'Chưa thanh toán',
+                        TenHinhPhat: TinhTrangKhiTra, // 'Có hư hỏng nhẹ' | 'Hỏng' | 'Mất'
+                        MaPhieu: req.params.id,
+                        MaCuonSach
+                    });
+                }
+
+                const book = await Book.findByPk(MaCuonSach);
+                if (book && !['Hỏng', 'Mất'].includes(book.TinhTrang)) {
+                    // Chỉ Hỏng/Mất mới đổi TinhTrang sách, hư hỏng nhẹ vẫn để sẵn sàng
+                    const newTinhTrang = TinhTrangKhiTra === 'Có hư hỏng nhẹ' ? 'Sẵn sàng' : TinhTrangKhiTra;
+                    await book.update({ TinhTrang: newTinhTrang });
+                    if (['Hỏng', 'Mất'].includes(TinhTrangKhiTra)) {
+                        const bookTitle = await BookTitle.findByPk(book.MaDauSach);
+                        if (bookTitle && bookTitle.SoLuong > 0)
+                            await BookTitle.decrement('SoLuong', { where: { MaDauSach: book.MaDauSach } });
+                    }
+                }
+            } else {
+                await Book.update({ TinhTrang: 'Sẵn sàng' }, { where: { MaCuonSach } });
+            }
+
+            if (tienPhat > 0) {
                 await Borrowing.update(
-                    { TienPhatPhatSinh: penaltyRule.MucPhat },
+                    { TienPhatPhatSinh: tienPhat },
                     { where: { MaPhieu: req.params.id, MaCuonSach } }
                 );
             }
-
-            // Đổi tình trạng sách thành Hỏng/Mất, giảm SoLuong
-            const book = await Book.findByPk(MaCuonSach);
-            if (book) {
-                // Chỉ giảm SoLuong nếu sách chưa bị Hỏng/Mất trước đó
-                if (!['Hỏng', 'Mất'].includes(book.TinhTrang)) {
-                    await book.update({ TinhTrang: TinhTrangKhiTra });
-                    const bookTitle = await BookTitle.findByPk(book.MaDauSach);
-                    if (bookTitle && bookTitle.SoLuong > 0)
-                        await BookTitle.decrement('SoLuong', { where: { MaDauSach: book.MaDauSach } });
-                }
-            }
-        } else {
-            await Book.update({ TinhTrang: 'Sẵn sàng' }, { where: { MaCuonSach } });
         }
 
         await slip.update({ MaNhanVienThu: req.user.MaNhanVien });
+
+        // FIX: cập nhật TrangThai phiếu — Trả muộn nếu có sách trả muộn, Đã trả nếu hết
+        const remaining = await Borrowing.findAll({
+            where: { MaPhieu: req.params.id, NgayTraThucTe: null }
+        });
+
+        if (remaining.length === 0) {
+            const hasLate = await PunishmentSlip.findOne({
+                where: { MaPhieu: req.params.id, TenHinhPhat: 'Phạt quá hạn' }
+            });
+            await slip.update({ TrangThai: hasLate ? 'Trả muộn' : 'Đã trả' });
+        }
 
         const result = await BorrowingSlip.findByPk(req.params.id, { include: includeAll });
         res.json(result);
@@ -166,14 +243,12 @@ const deleteBorrowingSlip = async (req, res) => {
         });
         if (notReturned) return res.status(400).json({ message: 'Còn sách chưa được trả' });
 
-        // 1. Xóa PhieuPhat trước (tham chiếu cả MaPhieu lẫn MaCuonSach)
         await PunishmentSlip.destroy({ where: { MaPhieu: req.params.id } });
-        // 2. Xóa MuonSach
         await Borrowing.destroy({ where: { MaPhieu: req.params.id } });
-        // 3. Xóa PhieuMuon
         await slip.destroy();
 
         res.json({ message: 'Xóa phiếu mượn thành công' });
     } catch (err) { res.status(500).json({ message: err.message }); }
 };
+
 module.exports = { getAllBorrowingSlips, getMyBorrowingSlips, getBorrowingSlipById, searchBorrowingSlips, createBorrowingSlip, returnBooks, deleteBorrowingSlip };

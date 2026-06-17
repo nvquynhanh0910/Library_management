@@ -83,7 +83,8 @@ const BookItemsManagement = ({ user }) => {
         switch (tinhTrang) {
             case "Sẵn sàng":  return { background: '#e8f5e9', color: '#2e7d32' };
             case "Đang mượn": return { background: '#fff3e0', color: '#ef6c00' };
-            case "Đã mất":    return { background: '#ffebee', color: '#c62828' };
+            case "Mất":       return { background: '#ffebee', color: '#c62828' };
+            case "Hỏng":      return { background: '#fff8e1', color: '#e65100' };
             default:          return { background: '#eee',    color: '#333' };
         }
     };
@@ -110,7 +111,8 @@ const BookItemsManagement = ({ user }) => {
                     <option value="">Tất cả Trạng thái</option>
                     <option value="Sẵn sàng">Sẵn sàng</option>
                     <option value="Đang mượn">Đang mượn</option>
-                    <option value="Đã mất">Đã mất</option>
+                    <option value="Hỏng">Hỏng</option>
+                    <option value="Mất">Mất</option>
                 </select>
             </div>
 

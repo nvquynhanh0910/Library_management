@@ -3,7 +3,7 @@ const { sequelize } = require("../config/database");
 
 const WritingBook = sequelize.define("WritingBook",{
     MaDauSach:{
-        type: DataTypes.STRING(20),
+        type: DataTypes.STRING(100),
         primaryKey: true,
     },
     MaTacGia:{

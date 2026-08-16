@@ -61,7 +61,7 @@ const LoginPage = ({ onLogin }) => {
             <div style={{ background: 'white', padding: '40px', borderRadius: '8px', width: '360px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
 
                 <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '25px' }}>
-                    {mode === 'login' ? '🔑 ĐĂNG NHẬP WINX' : '📝 ĐĂNG KÝ ĐỘC GIẢ'}
+                    {mode === 'login' ? '🔑 ĐĂNG NHẬP HỆ THỐNG' : '📝 ĐĂNG KÝ ĐỘC GIẢ'}
                 </h2>
 
                 {error && <p style={{ color: 'red', textAlign: 'center', fontSize: '14px' }}>{error}</p>}

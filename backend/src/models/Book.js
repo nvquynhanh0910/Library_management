@@ -18,7 +18,7 @@ const Book = sequelize.define("Book",{
         }
     },
     MaDauSach:{
-        type: DataTypes.STRING(20),
+        type: DataTypes.STRING(100),
     }
 },{
     tableName:"CuonSach",
